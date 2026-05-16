@@ -585,22 +585,30 @@ export default function WeddingInvitation() {
   const liveDdayText = useMemo(() => getLiveDdayText(dDay), [dDay]);
   const [selectedImage, setSelectedImage] = useState(null);
 
-  const shareInvitation = async () => {
-    const shareData = getShareData();
+const shareInvitation = async () => {
+  const shareData = getShareData();
 
+  try {
+    if (typeof navigator !== 'undefined' && navigator.share && window.location.protocol === 'https:') {
+      await navigator.share(shareData);
+      return;
+    }
+
+    if (typeof navigator === 'undefined' || !navigator.clipboard) throw new Error('Clipboard API is unavailable');
+
+    await navigator.clipboard.writeText(window.location.href);
+
+    if (typeof alert !== 'undefined') alert('청첩장 링크를 복사했어요.');
+  } catch (error) {
     try {
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share(shareData);
-        return;
-      }
-
-      if (typeof navigator === 'undefined' || !navigator.clipboard) throw new Error('Clipboard API is unavailable');
       await navigator.clipboard.writeText(window.location.href);
       if (typeof alert !== 'undefined') alert('청첩장 링크를 복사했어요.');
-    } catch (error) {
+    } catch (copyError) {
       if (typeof alert !== 'undefined') alert('공유에 실패했어요. 주소창의 링크를 직접 복사해 주세요.');
     }
-  };
+  }
+};
+
 
   const styles = '@keyframes petal-fall { 0% { transform: translate3d(-3vw, -14vh, 0) rotate(var(--petal-rotate)) scale(var(--petal-scale)); opacity: 0; } 10% { opacity: var(--petal-opacity); } 25% { transform: translate3d(calc(var(--drift-x) * 0.22), 24vh, 0) rotate(calc(var(--petal-rotate) + 70deg)) scale(calc(var(--petal-scale) * 1.02)); opacity: var(--petal-opacity); } 50% { transform: translate3d(calc(var(--drift-x) * 0.48), 52vh, 0) rotate(calc(var(--petal-rotate) + 160deg)) scale(var(--petal-scale)); opacity: calc(var(--petal-opacity) * 0.96); } 75% { transform: translate3d(calc(var(--drift-x) * 0.72), 82vh, 0) rotate(calc(var(--petal-rotate) + 240deg)) scale(calc(var(--petal-scale) * 0.98)); opacity: calc(var(--petal-opacity) * 0.88); } 100% { transform: translate3d(var(--drift-x), 118vh, 0) rotate(calc(var(--petal-rotate) + 320deg)) scale(calc(var(--petal-scale) * 0.94)); opacity: 0; } } @keyframes fade-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } } .animate-petal { animation-name: petal-fall; animation-timing-function: linear; animation-iteration-count: infinite; animation-fill-mode: both; will-change: transform, opacity; } .fade-up { animation: fade-up 0.9s ease forwards; }';
 
@@ -783,7 +791,7 @@ export default function WeddingInvitation() {
         <GuestbookSection />
 
         <section className="mx-auto max-w-[430px] bg-[#2f2925] px-7 py-16 text-center text-white">
-          <Icon name="image" className="mx-auto mb-5 text-white/70" size={24} />
+          <Icon name="share" className="mx-auto mb-5 text-white/70" size={24} />
           <p className="font-serif text-3xl leading-snug">
             {wedding.groom.name} & {wedding.bride.name}
           </p>
