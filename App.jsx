@@ -5,14 +5,14 @@ const wedding = {
     name: '이세진',
     father: '이동화',
     mother: '강미옥',
-    account: '국민은행 054901-04-163688 이세진',
+    account: '국민은행 / 054901-04-163688 / 이세진',
     phone: '010-2702-2346',
   },
   bride: {
     name: '김보라',
     father: '김범석',
     mother: '이광순',
-    account: '국민은행 699202-01-253065 김보라',
+    account: '국민은행 / 699202-01-253065 / 김보라',
     phone: '010-8893-8243',
   },
   dateText: '2026년 9월 12일 토요일 오후 3시',
@@ -193,6 +193,42 @@ function CopyButton({ text, label = '복사하기' }) {
       <Icon name="copy" size={14} />
       {copied ? '복사 완료' : label}
     </button>
+  );
+}
+
+function KakaoMap() {
+  useEffect(() => {
+    const containerId = 'daumRoughmapContainer1778914803665';
+
+    const loadMap = () => {
+      const target = document.getElementById(containerId);
+
+      if (!target) return;
+
+      target.innerHTML = `
+        <iframe
+          width="100%"
+          height="240"
+          frameborder="0"
+          scrolling="no"
+          marginheight="0"
+          marginwidth="0"
+          src="https://map.kakao.com/link/map/웨딩시그니처,37.550978,126.914633"
+          style="border:0;"
+        ></iframe>
+      `;
+    };
+
+    loadMap();
+  }, []);
+
+  return (
+    <div className="overflow-hidden rounded-t-[2rem]">
+      <div
+        id="daumRoughmapContainer1778914803665"
+        className="h-[240px] w-full"
+      />
+    </div>
   );
 }
 
@@ -434,13 +470,9 @@ export default function WeddingInvitation() {
           </SectionTitle>
 
           <div className="overflow-hidden rounded-[2rem] border border-stone-200 bg-[#f8f4ee] shadow-sm">
-            <div className="flex h-48 items-center justify-center bg-stone-100">
-              <div className="text-center text-stone-400">
-                <Icon name="map" className="mx-auto mb-2" size={24} />
-                <p className="text-sm">지도 영역</p>
-                <p className="mt-1 text-xs">카카오맵 퍼가기 영역으로 교체 가능</p>
-              </div>
-            </div>
+           <KakaoMap />
+
+            <div className="p-6"></div>
 
             <div className="p-6">
               <p className="font-serif text-2xl text-stone-800">{wedding.venue}</p>

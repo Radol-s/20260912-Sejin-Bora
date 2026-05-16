@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 const wedding = {
   groom: {
@@ -193,6 +193,56 @@ function CopyButton({ text, label = '복사하기' }) {
       <Icon name="copy" size={14} />
       {copied ? '복사 완료' : label}
     </button>
+  );
+
+}
+function KakaoMap() {
+  useEffect(() => {
+    const containerId = 'daumRoughmapContainer1778914803665';
+    const scriptId = 'daum-roughmap-loader';
+
+    const renderMap = () => {
+      const target = document.getElementById(containerId);
+
+      if (!target) return;
+      if (!window.daum || !window.daum.roughmap) return;
+
+      target.innerHTML = '';
+
+      new window.daum.roughmap.Lander({
+        timestamp: '1778914803665',
+        key: 'nuwrxri68xo',
+        mapWidth: '640',
+        mapHeight: '360',
+      }).render();
+    };
+
+    const existingScript = document.getElementById(scriptId);
+
+    if (existingScript) {
+      setTimeout(renderMap, 500);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = scriptId;
+    script.charset = 'UTF-8';
+    script.src = 'https://ssl.daumcdn.net/dmaps/map_js_init/roughmapLoader.js';
+
+    script.onload = () => {
+      setTimeout(renderMap, 500);
+    };
+
+    document.body.appendChild(script);
+  }, []);
+
+  return (
+    <div className="relative overflow-hidden bg-stone-100">
+      <div
+        id="daumRoughmapContainer1778914803665"
+        className="root_daum_roughmap root_daum_roughmap_landing"
+      />
+    </div>
   );
 }
 
@@ -434,13 +484,7 @@ export default function WeddingInvitation() {
           </SectionTitle>
 
           <div className="overflow-hidden rounded-[2rem] border border-stone-200 bg-[#f8f4ee] shadow-sm">
-            <div className="flex h-48 items-center justify-center bg-stone-100">
-              <div className="text-center text-stone-400">
-                <Icon name="map" className="mx-auto mb-2" size={24} />
-                <KakaoMap />
-                <p className="mt-1 text-xs">카카오맵 퍼가기 영역으로 교체 가능</p>
-              </div>
-            </div>
+            <KakaoMap />
 
             <div className="p-6">
               <p className="font-serif text-2xl text-stone-800">{wedding.venue}</p>
