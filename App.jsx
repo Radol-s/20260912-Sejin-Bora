@@ -359,12 +359,21 @@ function GuestbookSection() {
   const [deletePassword, setDeletePassword] = useState('');
   const [selectedDeleteId, setSelectedDeleteId] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const fetchMessages = async () => {
-    const { data, error } = await supabase
+  const pageSize = 5;
+  const totalPages = Math.ceil(totalCount / pageSize);
+
+  const fetchMessages = async (page = currentPage) => {
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error, count } = await supabase
       .from('guestbook_messages')
-      .select('id, name, message, created_at')
-      .order('created_at', { ascending: false });
+      .select('id, name, message, created_at', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
     if (error) {
       if (typeof alert !== 'undefined') alert('방명록을 불러오지 못했어요.');
@@ -372,11 +381,12 @@ function GuestbookSection() {
     }
 
     setMessages(data || []);
+    setTotalCount(count || 0);
   };
 
   useEffect(() => {
-    fetchMessages();
-  }, []);
+    fetchMessages(currentPage);
+  }, [currentPage]);
 
   const submitMessage = async () => {
     const trimmedName = name.trim();
@@ -412,7 +422,8 @@ function GuestbookSection() {
     setPassword('');
     setMessage('');
     setIsFormOpen(false);
-    fetchMessages();
+    setCurrentPage(1);
+    fetchMessages(1);
   };
 
   const deleteMessage = async () => {
@@ -451,7 +462,7 @@ function GuestbookSection() {
 
     setDeletePassword('');
     setSelectedDeleteId(null);
-    fetchMessages();
+    fetchMessages(currentPage);
   };
 
   return (
@@ -479,7 +490,9 @@ function GuestbookSection() {
             >
               ×
             </button>
+
             <p className="whitespace-pre-line pr-6 text-[15px] leading-8">{item.message}</p>
+
             <div className="mt-6 flex items-center justify-between text-sm text-stone-400">
               <span>From {item.name}</span>
               <span>{formatGuestbookDate(item.created_at)}</span>
@@ -487,6 +500,31 @@ function GuestbookSection() {
           </div>
         ))}
       </div>
+
+      {totalPages > 1 ? (
+        <div className="mt-8 flex items-center justify-center gap-2">
+          {Array.from({ length: totalPages }, function (_, index) {
+            const page = index + 1;
+            const isActive = page === currentPage;
+
+            return (
+              <button
+                key={page}
+                type="button"
+                onClick={() => setCurrentPage(page)}
+                className={
+                  'h-9 w-9 rounded-full text-sm transition ' +
+                  (isActive
+                    ? 'bg-stone-800 text-white'
+                    : 'bg-white text-stone-500 shadow-sm')
+                }
+              >
+                {page}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
 
       {isFormOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-5">
@@ -512,6 +550,7 @@ function GuestbookSection() {
                 className="w-full rounded-2xl bg-stone-50 px-4 py-4 text-sm outline-none"
                 placeholder="성함을 남겨주세요"
               />
+
               <input
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -519,6 +558,7 @@ function GuestbookSection() {
                 placeholder="삭제용 비밀번호를 입력해 주세요"
                 type="password"
               />
+
               <textarea
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
@@ -565,6 +605,7 @@ function GuestbookSection() {
               >
                 취소
               </button>
+
               <button
                 type="button"
                 onClick={deleteMessage}
