@@ -198,35 +198,34 @@ function CopyButton({ text, label = '복사하기' }) {
 
 function KakaoMap() {
   useEffect(() => {
-    const containerId = 'daumRoughmapContainer1778914803665';
-
-    const loadMap = () => {
-      const target = document.getElementById(containerId);
+    const renderMap = () => {
+      const target = document.getElementById('daumRoughmapContainer1778917802652');
 
       if (!target) return;
 
-      target.innerHTML = `
-        <iframe
-          width="100%"
-          height="240"
-          frameborder="0"
-          scrolling="no"
-          marginheight="0"
-          marginwidth="0"
-          src="https://map.kakao.com/link/map/웨딩시그니처,37.550978,126.914633"
-          style="border:0;"
-        ></iframe>
-      `;
+      if (!window.daum || !window.daum.roughmap) {
+        setTimeout(renderMap, 300);
+        return;
+      }
+
+      target.innerHTML = '';
+
+      new window.daum.roughmap.Lander({
+        timestamp: '1778917802652',
+        key: 'nv3rivuv454',
+        mapWidth: '360',
+        mapHeight: '240',
+      }).render();
     };
 
-    loadMap();
+    renderMap();
   }, []);
 
   return (
-    <div className="overflow-hidden rounded-t-[2rem]">
+    <div className="h-60 w-full overflow-hidden bg-stone-100">
       <div
-        id="daumRoughmapContainer1778914803665"
-        className="h-[240px] w-full"
+        id="daumRoughmapContainer1778917802652"
+        className="root_daum_roughmap root_daum_roughmap_landing"
       />
     </div>
   );
@@ -469,10 +468,7 @@ export default function WeddingInvitation() {
             귀한 걸음 편히 오실 수 있도록 예식장 위치를 안내드립니다.
           </SectionTitle>
 
-          <div className="overflow-hidden rounded-[2rem] border border-stone-200 bg-[#f8f4ee] shadow-sm">
-           <KakaoMap />
-
-            <div className="p-6"></div>
+          <KakaoMap />
 
             <div className="p-6">
               <p className="font-serif text-2xl text-stone-800">{wedding.venue}</p>
