@@ -530,7 +530,73 @@ function GuestbookSection() {
 
               <input
                 value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className="w-full rounded-2xl bg-stone-50 px-4 py-4 text-sm outline-none"
+                placeholder="삭제용 비밀번호를 입력해 주세요"
+                type="password"
+              />
 
+              <textarea
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                className="h-40 w-full resize-none rounded-2xl bg-stone-50 px-4 py-4 text-sm leading-7 outline-none"
+                placeholder="200자 이내로 작성해 주세요"
+                maxLength={200}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={submitMessage}
+              disabled={loading}
+              className="mt-6 w-full rounded-2xl bg-stone-800 px-5 py-4 text-sm text-white disabled:bg-stone-300"
+            >
+              {loading ? '저장 중' : '작성 완료'}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {selectedDeleteId ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-5">
+          <div className="w-full max-w-[360px] rounded-3xl bg-white p-6 shadow-2xl">
+            <h3 className="text-center text-xl font-semibold text-stone-800">메시지 삭제</h3>
+            <p className="mt-3 text-center text-sm text-stone-400">작성 시 입력한 비밀번호를 입력해 주세요.</p>
+
+            <input
+              value={deletePassword}
+              onChange={(event) => setDeletePassword(event.target.value)}
+              className="mt-6 w-full rounded-2xl bg-stone-50 px-4 py-4 text-sm outline-none"
+              placeholder="비밀번호"
+              type="password"
+            />
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletePassword('');
+                  setSelectedDeleteId(null);
+                }}
+                className="rounded-2xl border border-stone-200 px-4 py-3 text-sm text-stone-500"
+              >
+                취소
+              </button>
+
+              <button
+                type="button"
+                onClick={deleteMessage}
+                className="rounded-2xl bg-stone-800 px-4 py-3 text-sm text-white"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
 
 export default function WeddingInvitation() {
   const dDay = useMemo(() => calculateDday(weddingDate), []);
