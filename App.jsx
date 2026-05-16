@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { supabase } from './supabaseClient';
 
 const wedding = {
   groom: {
@@ -336,6 +337,249 @@ function AccountCard({ title, person }) {
   );
 }
 
+function formatGuestbookDate(value) {
+  const date = new Date(value);
+
+  return date.toLocaleString('ko-KR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+}
+
+function GuestbookSection() {
+  const [messages, setMessages] = useState([]);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [selectedDeleteId, setSelectedDeleteId] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchMessages = async () => {
+    const { data, error } = await supabase
+      .from('guestbook_messages')
+      .select('id, name, message, created_at')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      if (typeof alert !== 'undefined') alert('방명록을 불러오지 못했어요.');
+      return;
+    }
+
+    setMessages(data || []);
+  };
+
+  useEffect(() => {
+    fetchMessages();
+  }, []);
+
+  const submitMessage = async () => {
+    const trimmedName = name.trim();
+    const trimmedPassword = password.trim();
+    const trimmedMessage = message.trim();
+
+    if (!trimmedName || !trimmedPassword || !trimmedMessage) {
+      if (typeof alert !== 'undefined') alert('이름, 비밀번호, 메시지를 모두 입력해 주세요.');
+      return;
+    }
+
+    if (trimmedMessage.length > 200) {
+      if (typeof alert !== 'undefined') alert('메시지는 200자 이내로 작성해 주세요.');
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await supabase.from('guestbook_messages').insert({
+      name: trimmedName,
+      password: trimmedPassword,
+      message: trimmedMessage,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      if (typeof alert !== 'undefined') alert('메시지 저장에 실패했어요.');
+      return;
+    }
+
+    setName('');
+    setPassword('');
+    setMessage('');
+    setIsFormOpen(false);
+    fetchMessages();
+  };
+
+  const deleteMessage = async () => {
+    const trimmedPassword = deletePassword.trim();
+
+    if (!selectedDeleteId || !trimmedPassword) {
+      if (typeof alert !== 'undefined') alert('비밀번호를 입력해 주세요.');
+      return;
+    }
+
+    const { data, error: readError } = await supabase
+      .from('guestbook_messages')
+      .select('password')
+      .eq('id', selectedDeleteId)
+      .single();
+
+    if (readError || !data) {
+      if (typeof alert !== 'undefined') alert('메시지를 찾지 못했어요.');
+      return;
+    }
+
+    if (data.password !== trimmedPassword) {
+      if (typeof alert !== 'undefined') alert('비밀번호가 맞지 않아요.');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('guestbook_messages')
+      .delete()
+      .eq('id', selectedDeleteId);
+
+    if (error) {
+      if (typeof alert !== 'undefined') alert('삭제에 실패했어요.');
+      return;
+    }
+
+    setDeletePassword('');
+    setSelectedDeleteId(null);
+    fetchMessages();
+  };
+
+  return (
+    <section className="mx-auto max-w-[430px] bg-[#f3f3f3] px-7 py-16">
+      <SectionTitle eyebrow="message" title="방명록">
+        저희 둘에게 따뜻한 축하 메시지를 남겨주세요.
+      </SectionTitle>
+
+      <button
+        type="button"
+        onClick={() => setIsFormOpen(true)}
+        className="mb-6 w-full rounded-full bg-stone-800 px-5 py-3 text-sm text-white shadow-sm active:scale-[0.98]"
+      >
+        축하 메시지 작성하기
+      </button>
+
+      <div className="space-y-5">
+        {messages.map((item) => (
+          <div key={item.id} className="rounded-3xl bg-white p-6 text-stone-800 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setSelectedDeleteId(item.id)}
+              className="float-right text-2xl leading-none text-stone-300"
+              aria-label="메시지 삭제"
+            >
+              ×
+            </button>
+            <p className="whitespace-pre-line pr-6 text-[15px] leading-8">{item.message}</p>
+            <div className="mt-6 flex items-center justify-between text-sm text-stone-400">
+              <span>From {item.name}</span>
+              <span>{formatGuestbookDate(item.created_at)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {isFormOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-5">
+          <div className="w-full max-w-[430px] bg-white p-6 shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setIsFormOpen(false)}
+              className="ml-auto block text-3xl leading-none text-stone-400"
+              aria-label="닫기"
+            >
+              ×
+            </button>
+
+            <div className="mt-4 text-center">
+              <h3 className="text-2xl font-semibold text-stone-800">축하 메시지 작성하기</h3>
+              <p className="mt-3 text-sm text-stone-400">저희 둘의 결혼을 함께 축하해 주세요.</p>
+            </div>
+
+            <div className="mt-8 space-y-4">
+              <input
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                className="w-full rounded-2xl bg-stone-50 px-4 py-4 text-sm outline-none"
+                placeholder="성함을 남겨주세요"
+              />
+              <input
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className="w-full rounded-2xl bg-stone-50 px-4 py-4 text-sm outline-none"
+                placeholder="삭제용 비밀번호를 입력해 주세요"
+                type="password"
+              />
+              <textarea
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+                className="h-40 w-full resize-none rounded-2xl bg-stone-50 px-4 py-4 text-sm leading-7 outline-none"
+                placeholder="200자 이내로 작성해 주세요"
+                maxLength={200}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={submitMessage}
+              disabled={loading}
+              className="mt-6 w-full rounded-2xl bg-stone-800 px-5 py-4 text-sm text-white disabled:bg-stone-300"
+            >
+              {loading ? '저장 중' : '작성 완료'}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {selectedDeleteId ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-5">
+          <div className="w-full max-w-[360px] rounded-3xl bg-white p-6 shadow-2xl">
+            <h3 className="text-center text-xl font-semibold text-stone-800">메시지 삭제</h3>
+            <p className="mt-3 text-center text-sm text-stone-400">작성 시 입력한 비밀번호를 입력해 주세요.</p>
+
+            <input
+              value={deletePassword}
+              onChange={(event) => setDeletePassword(event.target.value)}
+              className="mt-6 w-full rounded-2xl bg-stone-50 px-4 py-4 text-sm outline-none"
+              placeholder="비밀번호"
+              type="password"
+            />
+
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletePassword('');
+                  setSelectedDeleteId(null);
+                }}
+                className="rounded-2xl border border-stone-200 px-4 py-3 text-sm text-stone-500"
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                onClick={deleteMessage}
+                className="rounded-2xl bg-stone-800 px-4 py-3 text-sm text-white"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 export default function WeddingInvitation() {
   const dDay = useMemo(() => calculateDday(weddingDate), []);
   const liveDdayText = useMemo(() => getLiveDdayText(dDay), [dDay]);
@@ -535,6 +779,8 @@ export default function WeddingInvitation() {
             <AccountCard title="신부측" person={wedding.bride} />
           </div>
         </section>
+
+        <GuestbookSection />
 
         <section className="mx-auto max-w-[430px] bg-[#2f2925] px-7 py-16 text-center text-white">
           <Icon name="image" className="mx-auto mb-5 text-white/70" size={24} />
