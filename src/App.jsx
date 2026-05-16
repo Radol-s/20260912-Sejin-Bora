@@ -437,7 +437,7 @@ export default function WeddingInvitation() {
             <div className="flex h-48 items-center justify-center bg-stone-100">
               <div className="text-center text-stone-400">
                 <Icon name="map" className="mx-auto mb-2" size={24} />
-                <p className="text-sm">지도 영역</p>
+                <KakaoMap />
                 <p className="mt-1 text-xs">카카오맵 퍼가기 영역으로 교체 가능</p>
               </div>
             </div>
