@@ -315,8 +315,22 @@ function FloatingPetals() {
   );
 }
 
-function GalleryModal({ selectedImage, onClose }) {
-  if (!selectedImage) return null;
+function GalleryModal({ photos, selectedImageIndex, onClose, onMove }) {
+  if (selectedImageIndex === null) return null;
+
+  const selectedImage = photos[selectedImageIndex];
+  const isFirst = selectedImageIndex === 0;
+  const isLast = selectedImageIndex === photos.length - 1;
+
+  const goPrevious = (event) => {
+    event.stopPropagation();
+    onMove(isFirst ? photos.length - 1 : selectedImageIndex - 1);
+  };
+
+  const goNext = (event) => {
+    event.stopPropagation();
+    onMove(isLast ? 0 : selectedImageIndex + 1);
+  };
 
   return (
     <div
@@ -333,12 +347,34 @@ function GalleryModal({ selectedImage, onClose }) {
         닫기
       </button>
 
+      <button
+        type="button"
+        onClick={goPrevious}
+        className="absolute left-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-3xl text-white backdrop-blur"
+        aria-label="이전 사진"
+      >
+        ‹
+      </button>
+
       <img
         src={selectedImage}
         alt="selected wedding"
         className="max-h-[90vh] w-full max-w-[520px] rounded-3xl object-cover"
         onClick={(event) => event.stopPropagation()}
       />
+
+      <button
+        type="button"
+        onClick={goNext}
+        className="absolute right-4 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/15 text-3xl text-white backdrop-blur"
+        aria-label="다음 사진"
+      >
+        ›
+      </button>
+
+      <div className="absolute bottom-6 rounded-full bg-white/10 px-4 py-2 text-xs text-white backdrop-blur">
+        {selectedImageIndex + 1} / {photos.length}
+      </div>
     </div>
   );
 }
@@ -670,7 +706,7 @@ function GuestbookSection() {
 export default function WeddingInvitation() {
   const dDay = useMemo(() => calculateDday(weddingDate), []);
   const liveDdayText = useMemo(() => getLiveDdayText(dDay), [dDay]);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(null);
 
   const shareInvitation = async () => {
     const shareData = getShareData();
@@ -767,7 +803,7 @@ export default function WeddingInvitation() {
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={() => setSelectedImage(imageBasePath + 'LYW01152-2.jpg')}
+              onClick={() => setSelectedImageIndex(0)}
               className="col-span-2 overflow-hidden rounded-[2rem]"
             >
               <WeddingImage
@@ -781,7 +817,7 @@ export default function WeddingInvitation() {
               <button
                 key={src}
                 type="button"
-                onClick={() => setSelectedImage(src)}
+                onClick={() => setSelectedImageIndex(index + 1)}
                 className="overflow-hidden rounded-3xl"
               >
                 <WeddingImage
@@ -886,7 +922,12 @@ export default function WeddingInvitation() {
           </button>
         </section>
 
-        <GalleryModal selectedImage={selectedImage} onClose={() => setSelectedImage(null)} />
+        <GalleryModal
+         photos={photos}
+         selectedImageIndex={selectedImageIndex}
+         onClose={() => setSelectedImageIndex(null)}
+         onMove={setSelectedImageIndex}
+        />
       </main>
     </>
   );
