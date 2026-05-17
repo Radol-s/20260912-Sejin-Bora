@@ -3,18 +3,40 @@ import { supabase } from './supabaseClient';
 
 const wedding = {
   groom: {
-    name: '이세진',
-    father: '이동화',
-    mother: '강미옥',
-    account: '국민은행 / 054901-04-163688 / 이세진',
-    phone: '010-2702-2346',
+  name: '이세진',
+  father: '이동화',
+  mother: '강미옥',
+  accounts: [
+    {
+      label: '아버지',
+      name: '이동화',
+      account: '국민은행 / 111111-11-111111 / 이동화',
+    },
+    {
+      label: '어머니',
+      name: '강미옥',
+      account: '신한은행 / 222-222-222222 / 강미옥',
+    },
+  ],
+  phone: '010-2702-2346',
   },
   bride: {
-    name: '김보라',
-    father: '김범석',
-    mother: '이광순',
-    account: '국민은행 / 699202-01-253065 / 김보라',
-    phone: '010-8893-8243',
+  name: '김보라',
+  father: '김범석',
+  mother: '이광순',
+  accounts: [
+    {
+      label: '아버지',
+      name: '김범석',
+      account: '국민은행 / 333333-33-333333 / 김범석',
+    },
+    {
+      label: '어머니',
+      name: '이광순',
+      account: '우리은행 / 4444-444-444444 / 이광순',
+    },
+  ],
+  phone: '010-8893-8243',
   },
   dateText: '2026년 9월 12일 토요일 오후 3시',
   dateShort: '2026.09.12 SAT 3:00 PM',
@@ -112,8 +134,8 @@ function runSmokeTests() {
   console.assert(photos.length >= 9, 'gallery should include enough photos for the layout');
   console.assert(isValidPhoneNumber(wedding.groom.phone), 'groom phone should use 010-0000-0000 format');
   console.assert(isValidPhoneNumber(wedding.bride.phone), 'bride phone should use 010-0000-0000 format');
-  console.assert(isValidAccountText(wedding.groom.account), 'groom account should include bank and account number');
-  console.assert(isValidAccountText(wedding.bride.account), 'bride account should include bank and account number');
+  console.assert(wedding.groom.accounts.every((item) => isValidAccountText(item.account)), 'groom family accounts should include bank and account number');
+  console.assert(wedding.bride.accounts.every((item) => isValidAccountText(item.account)), 'bride family accounts should include bank and account number');
   console.assert(wedding.tmapUrl.indexOf('https://tmap.life/') === 0, 'TMAP url should be configured');
   console.assert(wedding.kakaoMapUrl.indexOf('https://kko.to/') === 0, 'Kakao map url should be configured');
 }
@@ -333,17 +355,28 @@ function AccountCard({ title, person }) {
       >
         <div>
           <p className="text-xs tracking-[0.22em] text-stone-400">{title}</p>
-          <p className="mt-1 font-serif text-xl text-stone-800">{person.name}</p>
+          <p className="mt-1 font-serif text-xl text-stone-800">혼주 계좌 안내</p>
         </div>
         <Icon name={open ? 'up' : 'down'} size={18} />
       </button>
 
       {open ? (
-        <div className="mt-5 rounded-2xl bg-stone-50 p-4 text-sm text-stone-600">
-          <p className="leading-7">{person.account}</p>
-          <div className="mt-4 flex justify-end">
-            <CopyButton text={person.account} />
-          </div>
+        <div className="mt-5 space-y-3">
+          {person.accounts.map((item) => (
+            <div key={item.account} className="rounded-2xl bg-stone-50 p-4 text-sm text-stone-600">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs text-stone-400">{item.label}</p>
+                  <p className="mt-1 font-medium text-stone-800">{item.name}</p>
+                  <p className="mt-2 leading-7">{item.account}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <CopyButton text={item.account} />
+              </div>
+            </div>
+          ))}
         </div>
       ) : null}
     </div>
