@@ -316,20 +316,51 @@ function FloatingPetals() {
 }
 
 function GalleryModal({ photos, selectedImageIndex, onClose, onMove }) {
+  const [touchStartX, setTouchStartX] = useState(null);
+
   if (selectedImageIndex === null) return null;
 
   const selectedImage = photos[selectedImageIndex];
   const isFirst = selectedImageIndex === 0;
   const isLast = selectedImageIndex === photos.length - 1;
 
+  const movePrevious = () => {
+    onMove(isFirst ? photos.length - 1 : selectedImageIndex - 1);
+  };
+
+  const moveNext = () => {
+    onMove(isLast ? 0 : selectedImageIndex + 1);
+  };
+
   const goPrevious = (event) => {
     event.stopPropagation();
-    onMove(isFirst ? photos.length - 1 : selectedImageIndex - 1);
+    movePrevious();
   };
 
   const goNext = (event) => {
     event.stopPropagation();
-    onMove(isLast ? 0 : selectedImageIndex + 1);
+    moveNext();
+  };
+
+  const handleTouchStart = (event) => {
+    setTouchStartX(event.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (event) => {
+    if (touchStartX === null) return;
+
+    const touchEndX = event.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        moveNext();
+      } else {
+        movePrevious();
+      }
+    }
+
+    setTouchStartX(null);
   };
 
   return (
@@ -361,6 +392,8 @@ function GalleryModal({ photos, selectedImageIndex, onClose, onMove }) {
         alt="selected wedding"
         className="max-h-[90vh] w-full max-w-[520px] rounded-3xl object-cover"
         onClick={(event) => event.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       />
 
       <button
