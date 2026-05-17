@@ -317,6 +317,7 @@ function FloatingPetals() {
 
 function GalleryModal({ photos, selectedImageIndex, onClose, onMove }) {
   const [touchStartX, setTouchStartX] = useState(null);
+  const [touchStartY, setTouchStartY] = useState(null);
 
   if (selectedImageIndex === null) return null;
 
@@ -344,16 +345,21 @@ function GalleryModal({ photos, selectedImageIndex, onClose, onMove }) {
 
   const handleTouchStart = (event) => {
     setTouchStartX(event.touches[0].clientX);
+    setTouchStartY(event.touches[0].clientY);
   };
 
   const handleTouchEnd = (event) => {
-    if (touchStartX === null) return;
+    if (touchStartX === null || touchStartY === null) return;
 
     const touchEndX = event.changedTouches[0].clientX;
-    const diff = touchStartX - touchEndX;
+    const touchEndY = event.changedTouches[0].clientY;
+    const diffX = touchStartX - touchEndX;
+    const diffY = touchStartY - touchEndY;
 
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) {
+    const isHorizontalSwipe = Math.abs(diffX) > 45 && Math.abs(diffX) > Math.abs(diffY);
+
+    if (isHorizontalSwipe) {
+      if (diffX > 0) {
         moveNext();
       } else {
         movePrevious();
@@ -361,12 +367,15 @@ function GalleryModal({ photos, selectedImageIndex, onClose, onMove }) {
     }
 
     setTouchStartX(null);
+    setTouchStartY(null);
   };
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 px-4"
+      className="fixed inset-0 z-50 flex touch-pan-y items-center justify-center bg-black/90 px-4"
       onClick={onClose}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       role="dialog"
       aria-modal="true"
     >
@@ -390,10 +399,9 @@ function GalleryModal({ photos, selectedImageIndex, onClose, onMove }) {
       <img
         src={selectedImage}
         alt="selected wedding"
-        className="max-h-[90vh] w-full max-w-[520px] rounded-3xl object-cover"
+        className="max-h-[90vh] w-full max-w-[520px] select-none rounded-3xl object-cover"
+        draggable="false"
         onClick={(event) => event.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
       />
 
       <button
@@ -743,20 +751,32 @@ export default function WeddingInvitation() {
   const [showAllPhotos, setShowAllPhotos] = useState(false);
 
   const shareInvitation = async () => {
-    const shareData = getShareData();
+  const shareData = getShareData();
 
+  if (typeof navigator !== 'undefined' && navigator.share) {
     try {
-      if (typeof navigator !== 'undefined' && navigator.share) {
-        await navigator.share(shareData);
+      await navigator.share(shareData);
+      return;
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+
+      try {
+        await navigator.clipboard.writeText(window.location.href);
+        if (typeof alert !== 'undefined') alert('청첩장 링크를 복사했어요.');
+        return;
+      } catch (copyError) {
+        if (typeof alert !== 'undefined') alert('공유에 실패했어요. 주소창의 링크를 직접 복사해 주세요.');
         return;
       }
-
-      if (typeof navigator === 'undefined' || !navigator.clipboard) throw new Error('Clipboard API is unavailable');
-      await navigator.clipboard.writeText(window.location.href);
-      if (typeof alert !== 'undefined') alert('청첩장 링크를 복사했어요.');
-    } catch (error) {
-      if (typeof alert !== 'undefined') alert('공유에 실패했어요. 주소창의 링크를 직접 복사해 주세요.');
     }
+  }
+
+  try {
+    await navigator.clipboard.writeText(window.location.href);
+    if (typeof alert !== 'undefined') alert('청첩장 링크를 복사했어요.');
+  } catch (error) {
+    if (typeof alert !== 'undefined') alert('공유에 실패했어요. 주소창의 링크를 직접 복사해 주세요.');
+  }
   };
 
   const styles = '@keyframes petal-fall { 0% { transform: translate3d(-3vw, -14vh, 0) rotate(var(--petal-rotate)) scale(var(--petal-scale)); opacity: 0; } 10% { opacity: var(--petal-opacity); } 25% { transform: translate3d(calc(var(--drift-x) * 0.22), 24vh, 0) rotate(calc(var(--petal-rotate) + 70deg)) scale(calc(var(--petal-scale) * 1.02)); opacity: var(--petal-opacity); } 50% { transform: translate3d(calc(var(--drift-x) * 0.48), 52vh, 0) rotate(calc(var(--petal-rotate) + 160deg)) scale(var(--petal-scale)); opacity: calc(var(--petal-opacity) * 0.96); } 75% { transform: translate3d(calc(var(--drift-x) * 0.72), 82vh, 0) rotate(calc(var(--petal-rotate) + 240deg)) scale(calc(var(--petal-scale) * 0.98)); opacity: calc(var(--petal-opacity) * 0.88); } 100% { transform: translate3d(var(--drift-x), 118vh, 0) rotate(calc(var(--petal-rotate) + 320deg)) scale(calc(var(--petal-scale) * 0.94)); opacity: 0; } } @keyframes fade-up { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } } .animate-petal { animation-name: petal-fall; animation-timing-function: linear; animation-iteration-count: infinite; animation-fill-mode: both; will-change: transform, opacity; } .fade-up { animation: fade-up 0.9s ease forwards; }';
