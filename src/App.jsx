@@ -707,6 +707,7 @@ export default function WeddingInvitation() {
   const dDay = useMemo(() => calculateDday(weddingDate), []);
   const liveDdayText = useMemo(() => getLiveDdayText(dDay), [dDay]);
   const [selectedImageIndex, setSelectedImageIndex] = useState(null);
+  const [showAllPhotos, setShowAllPhotos] = useState(false);
 
   const shareInvitation = async () => {
     const shareData = getShareData();
@@ -813,7 +814,7 @@ export default function WeddingInvitation() {
               />
             </button>
 
-            {photos.slice(1, 9).map((src, index) => (
+            {(showAllPhotos ? photos.slice(1) : photos.slice(1, 9)).map((src, index) => (
               <button
                 key={src}
                 type="button"
@@ -828,6 +829,17 @@ export default function WeddingInvitation() {
               </button>
             ))}
           </div>
+          {photos.length > 9 ? (
+            <div className="mt-6 flex justify-center">
+             <button
+               type="button"
+               onClick={() => setShowAllPhotos(!showAllPhotos)}
+               className="rounded-full border border-stone-200 bg-white px-5 py-3 text-sm text-stone-600 shadow-sm active:scale-[0.98]"
+             >
+              {showAllPhotos ? '사진 접기' : '사진 더보기'}
+             </button>
+             </div>
+          ) : null}
         </section>
 
         <section className="mx-auto max-w-[430px] bg-white px-7 py-16">
